@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NOVA CASH</title>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI, sans-serif;
+background:#f4f6f9;
+}
+
+/* LANDING */
+.landing{
+text-align:center;
+padding:100px 20px;
+background:linear-gradient(120deg,#4e73df,#1cc88a);
+color:white;
+}
+
+.landing button{
+padding:12px 25px;
+border:none;
+border-radius:25px;
+background:white;
+color:#4e73df;
+font-weight:bold;
+cursor:pointer;
+}
+
+/* LOGIN & REGISTER */
+.form-box{
+width:320px;
+margin:40px auto;
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 5px 20px rgba(0,0,0,0.1);
+}
+
+input{
+width:100%;
+padding:10px;
+margin:8px 0;
+border:1px solid #ccc;
+border-radius:5px;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.primary{
+background:#4e73df;
+color:white;
+width:100%;
+}
+
+.success{
+background:#1cc88a;
+color:white;
+}
+
+.danger{
+background:#e74a3b;
+color:white;
+}
+
+/* DASHBOARD */
+.dashboard{
+display:flex;
+}
+
+.sidebar{
+width:200px;
+background:#343a40;
+color:white;
+min-height:100vh;
+padding:20px;
+}
+
+.sidebar button{
+width:100%;
+margin:5px 0;
+background:#4e73df;
+color:white;
+}
+
+.content{
+flex:1;
+padding:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+background:white;
+}
+
+th,td{
+padding:10px;
+border:1px solid #ddd;
+text-align:left;
+}
+
+section{
+display:none;
+}
+
+.active{
+display:block;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LANDING -->
+<section id="home" class="landing active">
+<h1>NOVA CASH</h1>
+<p>Sistem Kasir & Manajemen Produk Digital</p>
+<button onclick="show('login')">Mulai Sekarang</button>
+</section>
+
+<!-- LOGIN -->
+<section id="login">
+<div class="form-box">
+<h2>Login</h2>
+<input type="email" id="loginEmail" placeholder="Email">
+<input type="password" id="loginPass" placeholder="Password">
+<button class="primary" onclick="login()">Login</button>
+<p>Belum punya akun? <a href="#" onclick="show('register')">Daftar</a></p>
+</div>
+</section>
+
+<!-- REGISTER -->
+<section id="register">
+<div class="form-box">
+<h2>Daftar Akun</h2>
+<input type="text" id="regName" placeholder="Nama">
+<input type="email" id="regEmail" placeholder="Email">
+<input type="password" id="regPass" placeholder="Password">
+<button class="primary" onclick="register()">Daftar</button>
+</div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard">
+<div class="dashboard">
+<div class="sidebar">
+<h3>NOVA CASH</h3>
+<button onclick="showContent('profile')">Edit Profile</button>
+<button onclick="showContent('product')">Kelola Produk</button>
+<button onclick="logout()" class="danger">Logout</button>
+</div>
+
+<div class="content">
+
+<div id="profile" class="content-box">
+<h2>Edit Profile</h2>
+<input type="text" id="editName">
+<input type="email" id="editEmail">
+<button class="success" onclick="saveProfile()">Simpan</button>
+</div>
+
+<div id="product" class="content-box" style="display:none;">
+<h2>Manajemen Produk</h2>
+<input type="text" id="prodName" placeholder="Nama Produk">
+<input type="number" id="prodStock" placeholder="Stok">
+<input type="number" id="prodPrice" placeholder="Harga">
+<button class="primary" onclick="addProduct()">Tambah Produk</button>
+
+<table>
+<thead>
+<tr>
+<th>Nama</th>
+<th>Stok</th>
+<th>Harga</th>
+<th>Aksi</th>
+</tr>
+</thead>
+<tbody id="prodList"></tbody>
+</table>
+</div>
+
+</div>
+</div>
+</section>
+
+<script>
+
+let currentUser=null;
+
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
+
+function register(){
+let name=regName.value;
+let email=regEmail.value;
+let pass=regPass.value;
+
+if(!name||!email||!pass){
+alert("Isi semua data!");
+return;
+}
+
+let users=JSON.parse(localStorage.getItem("users"))||[];
+users.push({name,email,pass});
+localStorage.setItem("users",JSON.stringify(users));
+alert("Akun berhasil dibuat!");
+show("login");
+}
+
+function login(){
+let email=loginEmail.value;
+let pass=loginPass.value;
+
+let users=JSON.parse(localStorage.getItem("users"))||[];
+let user=users.find(u=>u.email===email && u.pass===pass);
+
+if(user){
+currentUser=user;
+editName.value=user.name;
+editEmail.value=user.email;
+show("dashboard");
+loadProducts();
+}else{
+alert("Akun tidak ditemukan!");
+}
+}
+
+function logout(){
+currentUser=null;
+show("home");
+}
+
+function showContent(id){
+document.getElementById("profile").style.display="none";
+document.getElementById("product").style.display="none";
+document.getElementById(id).style.display="block";
+}
+
+function saveProfile(){
+currentUser.name=editName.value;
+currentUser.email=editEmail.value;
+
+let users=JSON.parse(localStorage.getItem("users"));
+users=users.map(u=>u.email===currentUser.email?currentUser:u);
+localStorage.setItem("users",JSON.stringify(users));
+alert("Profile berhasil diupdate!");
+}
+
+function addProduct(){
+let name=prodName.value;
+let stock=prodStock.value;
+let price=prodPrice.value;
+
+if(!name||!stock||!price){
+alert("Isi semua data produk!");
+return;
+}
+
+let products=JSON.parse(localStorage.getItem("products"))||[];
+products.push({name,stock,price});
+localStorage.setItem("products",JSON.stringify(products));
+loadProducts();
+}
+
+function loadProducts(){
+let products=JSON.parse(localStorage.getItem("products"))||[];
+let data="";
+products.forEach((p,i)=>{
+data+=`
+<tr>
+<td>${p.name}</td>
+<td>${p.stock}</td>
+<td>Rp ${p.price}</td>
+<td><button onclick="deleteProduct(${i})" class="danger">Hapus</button></td>
+</tr>
+`;
+});
+prodList.innerHTML=data;
+}
+
+function deleteProduct(i){
+let products=JSON.parse(localStorage.getItem("products"));
+products.splice(i,1);
+localStorage.setItem("products",JSON.stringify(products));
+loadProducts();
+}
+
+</script>
+
+</body>
+</html>
